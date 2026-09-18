@@ -1,0 +1,170 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CR Gang Management</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b0b0d;color:#eee;font-family:Arial,sans-serif}
+header{background:#151519;border-bottom:1px solid #29292e;padding:20px}
+.logo{font-size:26px;font-weight:bold;color:#e5092f}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+button{background:#e5092f;color:white;border:0;border-radius:7px;padding:11px 15px;cursor:pointer}
+button.secondary{background:#29292e}
+main{max-width:1000px;margin:auto;padding:25px}
+h1{font-size:25px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.card{background:#17171b;border:1px solid #29292e;border-radius:12px;padding:18px}
+.num{font-size:28px;font-weight:bold;color:#ff3657;margin-top:10px}
+.panel{background:#17171b;border:1px solid #29292e;border-radius:12px;padding:18px;margin-top:20px}
+input,select{background:#0d0d10;border:1px solid #444;color:white;padding:11px;border-radius:7px;width:100%;margin:6px 0 12px}
+table{width:100%;border-collapse:collapse;margin-top:15px}
+td,th{text-align:right;padding:12px;border-bottom:1px solid #29292e}
+.empty{text-align:center;color:#999;padding:35px}
+label{display:block;margin-top:10px}
+</style>
+</head>
+<body>
+
+<header>
+<div class="logo">CR GANG MANAGEMENT</div>
+<div style="color:#999;margin-top:6px">لوحة إدارة عصابات قراند RP</div>
+<nav>
+<button onclick="show('home')">الرئيسية</button>
+<button onclick="show('gangs')">العصابات</button>
+<button onclick="show('points')">النقاط</button>
+<button onclick="show('roles')">الرتب</button>
+</nav>
+</header>
+
+<main id="app"></main>
+
+<script>
+let gangs=[];
+let roles=[
+{name:"Owner",desc:"كامل الصلاحيات"},
+{name:"Gang Manager",desc:"إدارة العصابات"},
+{name:"Gang Leader",desc:"قائد العصابة"},
+{name:"Member",desc:"مشاهدة فقط"}
+];
+let selected=null;
+
+function show(page){
+let app=document.getElementById("app");
+
+if(page==="home"){
+app.innerHTML=`
+<h1>لوحة التحكم</h1>
+<p style="color:#999">مرحباً بك في CR RP</p>
+<div class="cards">
+<div class="card">العصابات<div class="num">${gangs.length}</div></div>
+<div class="card">النقاط<div class="num">${gangs.reduce((a,g)=>a+g.points,0)}</div></div>
+<div class="card">الأعضاء<div class="num">${gangs.reduce((a,g)=>a+g.members.length,0)}</div></div>
+</div>
+<div class="panel">
+<h2>العصابات</h2>
+${gangs.length?gangs.map(g=>`
+<p><b>${g.name}</b> — ${g.points} نقطة — ${g.members.length} أعضاء</p>`).join("")
+:`<div class="empty">لا توجد أي عصابات حالياً<br>أنت تقدر تضيف العصابات بنفسك.</div>`}
+</div>`;
+}
+
+if(page==="gangs"){
+app.innerHTML=`
+<h1>إدارة العصابات</h1>
+<button onclick="addGang()">+ إضافة عصابة</button>
+<div class="panel">
+${gangs.length?gangs.map(g=>`
+<div style="border-bottom:1px solid #333;padding:15px 0">
+<h3>${g.name}</h3>
+<p style="color:#aaa">${g.points} نقطة | ${g.members.length} أعضاء</p>
+<button onclick="selectGang('${g.name}')">إدارة</button>
+</div>`).join("")
+:`<div class="empty">لا توجد عصابات<br>ابدأ بإضافة أول عصابة.</div>`}
+</div>`;
+}
+
+if(page==="points"){
+app.innerHTML=`
+<h1>النقاط والمزايا</h1>
+<div class="panel">
+<label>اختر العصابة</label>
+<select id="gselect">
+${gangs.map(g=>`<option>${g.name}</option>`).join("")}
+</select>
+<label>عدد النقاط</label>
+<input id="amount" type="number" placeholder="مثلاً 50">
+<button onclick="addPoints()">إضافة نقاط</button>
+</div>
+<div class="panel">
+<h3>المستويات</h3>
+<p>0 نقطة — البداية</p>
+<p>250 نقطة — زيادة حد الأعضاء</p>
+<p>500 نقطة — مقر مطور</p>
+<p>1000 نقطة — مزايا خاصة</p>
+</div>`;
+}
+
+if(page==="roles"){
+app.innerHTML=`
+<h1>الرتب والصلاحيات</h1>
+<div class="panel">
+${roles.map(r=>`
+<div style="padding:13px 0;border-bottom:1px solid #333">
+<b>${r.name}</b><br>
+<span style="color:#aaa">${r.desc}</span>
+</div>`).join("")}
+<br>
+<button onclick="addRole()">+ إضافة رتبة</button>
+</div>`;
+}
+}
+
+function addGang(){
+let name=prompt("اكتب اسم العصابة");
+if(!name)return;
+gangs.push({name:name,points:0,members:[]});
+selected=name;
+show("gangs");
+}
+
+function selectGang(name){
+selected=name;
+let g=gangs.find(x=>x.name===name);
+let action=prompt("اكتب: عضو لإضافة عضو، أو طرد لطرد عضو");
+if(action==="عضو"){
+let m=prompt("اسم العضو");
+if(m)g.members.push(m);
+}
+if(action==="طرد"){
+let m=prompt("اسم العضو المراد طرده");
+g.members=g.members.filter(x=>x!==m);
+}
+show("gangs");
+}
+
+function addPoints(){
+let name=document.getElementById("gselect").value;
+let amount=Number(document.getElementById("amount").value);
+let g=gangs.find(x=>x.name===name);
+if(g&&amount>0){
+g.points+=amount;
+alert("تمت إضافة النقاط");
+show("points");
+}
+}
+
+function addRole(){
+let name=prompt("اسم الرتبة");
+if(!name)return;
+let desc=prompt("وصف الرتبة")||"";
+roles.push({name,desc});
+show("roles");
+}
+
+show("home");
+</script>
+</body>
+</html>
